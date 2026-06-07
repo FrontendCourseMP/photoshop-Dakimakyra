@@ -18,7 +18,7 @@
 
 ## Ссылка на сайт
 
-**https://celebrated-starburst-a5a2bf.netlify.app/**
+**majestic-nasturtium-55b92e.netlify.app**
 
 ## Подробно по функционалу
 
