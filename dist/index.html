@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Учебный редактор растровой графики Владислава Кашкина" />
+    <title>Raster Room | Владислав Кашкин</title>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <header class="banner">
+      <a class="brand" href="./" aria-label="Raster Room, новый документ">
+        <span class="brand-symbol" aria-hidden="true"><i></i><b></b></span>
+        <span><strong>RASTER ROOM</strong><small>графическая лаборатория</small></span>
+      </a>
+      <div class="file-actions">
+        <button class="ui-button ui-button-light" id="openButton" type="button">Открыть файл</button>
+        <input id="filePicker" type="file" accept=".png,.jpg,.jpeg,.gb7,image/png,image/jpeg" hidden />
+        <button class="ui-button ui-button-orange" id="saveButton" type="button" disabled>Сохранить</button>
+      </div>
+    </header>
+
+    <main class="editor">
+      <section class="document-strip" aria-label="Свойства изображения">
+        <div><span>Документ</span><strong id="fileName">не открыт</strong></div>
+        <div><span>Формат</span><strong id="formatValue">—</strong></div>
+        <div><span>Размер</span><strong id="sizeValue">0 × 0</strong></div>
+        <div><span>Глубина</span><strong id="depthValue">—</strong></div>
+        <div><span>Масштаб</span><strong id="zoomValue">100%</strong></div>
+      </section>
+
+      <section class="studio" aria-label="Холст и инструменты">
+        <div class="stage" id="dropZone">
+          <div class="stage-caption"><span>Холст</span><small id="previewLabel" role="status">Сохранённые изменения</small><small id="stageHint">PNG, JPG и GB7</small></div>
+          <div class="canvas-zone" id="canvasZone">
+            <div class="welcome-card" id="welcomeCard">
+              <span class="welcome-number">01</span>
+              <p>Начните с изображения</p>
+              <h1>Перетащите файл<br />на рабочий стол</h1>
+              <button class="ui-button ui-button-purple" id="welcomeOpen" type="button">Выбрать с компьютера</button>
+              <div class="sample-row" aria-label="Учебные файлы GrayBit-7">
+                <span>Примеры:</span>
+                <button type="button" data-sample="gradient">градиент</button>
+                <button type="button" data-sample="mask">маска</button>
+                <button type="button" data-sample="vertical">вертикаль</button>
+              </div>
+            </div>
+            <div class="canvas-holder" id="canvasHolder">
+              <canvas id="artboard" aria-label="Загруженное изображение"></canvas>
+            </div>
+            <div class="drop-message" id="dropMessage" aria-hidden="true">Отпустите изображение</div>
+          </div>
+        </div>
+
+        <nav class="tool-rack" aria-label="Инструменты">
+          <div class="tool-group">
+            <span class="tool-group-title">Инструменты</span>
+            <button class="tool-tile" id="pickerTool" type="button" disabled aria-pressed="false"><b>⌖</b><span>Пипетка</span></button>
+            <button class="tool-tile" id="levelsTool" type="button" disabled><b>◒</b><span>Уровни</span></button>
+            <button class="tool-tile" id="resizeTool" type="button" disabled><b>↔</b><span>Размер</span></button>
+            <button class="tool-tile" id="filterTool" type="button" disabled><b>✦</b><span>Фильтры</span></button>
+          </div>
+          <div class="zoom-cluster">
+            <label for="zoomSlider">Просмотр <output id="zoomOutput">100%</output></label>
+            <div>
+              <button id="zoomDown" type="button" aria-label="Уменьшить масштаб" disabled>−</button>
+              <input id="zoomSlider" type="range" min="12" max="300" value="100" disabled />
+              <button id="zoomUp" type="button" aria-label="Увеличить масштаб" disabled>+</button>
+              <button class="fit-button" id="fitButton" type="button" disabled>Вписать</button>
+            </div>
+          </div>
+        </nav>
+      </section>
+
+      <section class="control-deck" aria-label="Параметры изображения">
+        <article class="deck-card channels-card">
+          <header><div><span class="card-index">A</span><h2>Цветовые каналы</h2></div><button id="enableAllChannels" type="button" disabled>Включить все</button></header>
+          <p class="card-note" id="channelsNote">После загрузки здесь появятся миниатюры каналов.</p>
+          <div class="mode-cards" id="modeCards" role="group" aria-label="Режимы каналов"></div>
+          <p class="mode-note" id="modeNote" hidden>Режим меняет просмотр и экспорт. Исходные цвет и прозрачность сохраняются. Ниже можно отключать отдельные каналы.</p>
+          <div class="channel-cards" id="channelCards"></div>
+        </article>
+
+        <article class="deck-card sample-card">
+          <header><div><span class="card-index">B</span><h2>Пиксель</h2></div></header>
+          <div class="pixel-empty" id="pixelEmpty">Активируйте пипетку и нажмите на холст.</div>
+          <div class="pixel-result" id="pixelResult" hidden>
+            <div class="color-patch" id="colorPatch"></div>
+            <strong id="hexValue">#000000</strong>
+            <dl>
+              <div><dt>Координаты</dt><dd id="coordinateValue">0, 0</dd></div>
+              <div><dt>RGB</dt><dd id="rgbValue">0, 0, 0</dd></div>
+              <div><dt>CIELAB</dt><dd id="labValue">0, 0, 0</dd></div>
+            </dl>
+          </div>
+        </article>
+
+        <article class="deck-card export-card">
+          <header><div><span class="card-index">C</span><h2>Экспорт</h2></div></header>
+          <label for="exportFormat">Формат результата</label>
+          <select id="exportFormat">
+            <option value="png">PNG, прозрачность и качество</option>
+            <option value="jpeg">JPG, компактный файл</option>
+            <option value="gb7">GB7, семь бит серого</option>
+          </select>
+          <p id="exportNote">PNG сохраняет полупрозрачные пиксели без потерь.</p>
+          <button class="ui-button ui-button-orange" id="exportButton" type="button" disabled>Скачать PNG</button>
+        </article>
+      </section>
+    </main>
+
+    <footer class="status-line"><span id="statusText">Готово к работе</span><span>Лабораторные работы 1–5</span></footer>
+
+    <dialog id="levelsDialog" class="work-dialog">
+      <form method="dialog" class="dialog-frame" id="levelsForm">
+        <header><div><span>Тоновая коррекция</span><h2>Уровни</h2></div><button class="close-dialog" value="cancel" type="button" data-close="levels" aria-label="Закрыть">×</button></header>
+        <div class="levels-layout">
+          <section>
+            <div class="dialog-toolbar">
+              <label>Канал<select id="levelTarget"></select></label>
+              <label class="switch-line"><input id="logHistogram" type="checkbox" /> Логарифмическая шкала</label>
+            </div>
+            <div class="histogram-box"><canvas id="levelHistogram" width="640" height="240" aria-label="Гистограмма изображения"></canvas></div>
+            <div class="histogram-scale"><span>0</span><span id="histogramMiddle">128</span><span id="histogramMaximum">255</span></div>
+          </section>
+          <section class="levels-controls">
+            <h3>Входные значения</h3>
+            <div class="triple-slider">
+              <input id="shadowSlider" class="shadow-range" type="range" min="0" max="255" value="0" aria-label="Точка чёрного" />
+              <input id="gammaSlider" class="gamma-range" type="range" min="0" max="255" value="127.5" step="0.01" aria-label="Маркер полутонов" />
+              <input id="highlightSlider" class="highlight-range" type="range" min="0" max="255" value="255" aria-label="Точка белого" />
+            </div>
+            <div class="number-grid">
+              <label>Чёрный<input id="shadowNumber" type="number" min="0" max="254" value="0" /></label>
+              <label>Гамма<input id="gammaNumber" type="number" min="0.1" max="9.9" value="1" step="0.01" /></label>
+              <label>Белый<input id="highlightNumber" type="number" min="1" max="255" value="255" /></label>
+            </div>
+          </section>
+        </div>
+        <footer>
+          <label class="switch-line"><input id="levelsPreview" type="checkbox" checked /> Предпросмотр</label>
+          <div><button class="ui-button ui-button-light" id="levelsReset" type="button">Сбросить</button><button class="ui-button ui-button-light" id="levelsCancel" type="button">Отмена</button><button class="ui-button ui-button-purple" id="levelsApply" type="submit">Применить</button></div>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="resizeDialog" class="work-dialog compact-dialog">
+      <form method="dialog" class="dialog-frame" id="resizeForm">
+        <header><div><span>Геометрия документа</span><h2>Новый размер</h2></div><button class="close-dialog" type="button" data-close="resize" aria-label="Закрыть">×</button></header>
+        <div class="resize-content">
+          <div class="pixel-counts"><div><span>До</span><strong id="pixelsBefore">0</strong></div><b>→</b><div><span>После</span><strong id="pixelsAfter">0</strong></div></div>
+          <label>Единицы<select id="resizeUnits"><option value="pixels">Пиксели</option><option value="percent">Проценты</option></select></label>
+          <div class="dimension-row">
+            <label>Ширина<input id="resizeWidth" type="number" min="1" max="16384" /></label>
+            <label class="link-control"><input id="lockRatio" type="checkbox" checked /><span>Связать стороны</span></label>
+            <label>Высота<input id="resizeHeight" type="number" min="1" max="16384" /></label>
+          </div>
+          <label>Интерполяция
+            <span class="select-help"><select id="resizeMethod"><option value="bilinear">Билинейная</option><option value="nearest">Ближайший пиксель</option></select><button id="methodHelp" type="button" data-tip="Смешивает четыре соседних пикселя и даёт плавные края." aria-label="Описание интерполяции">?</button></span>
+          </label>
+          <p class="form-error" id="resizeError" hidden></p>
+        </div>
+        <footer><span></span><div><button class="ui-button ui-button-light" id="resizeCancel" type="button">Отмена</button><button class="ui-button ui-button-purple" type="submit">Изменить</button></div></footer>
+      </form>
+    </dialog>
+
+    <dialog id="filterDialog" class="work-dialog">
+      <form method="dialog" class="dialog-frame" id="filterForm">
+        <header><div><span>Обработка соседних пикселей</span><h2>Фильтрация</h2></div><button class="close-dialog" type="button" data-close="filter" aria-label="Закрыть">×</button></header>
+        <div class="filter-layout">
+          <section>
+            <label>Предустановка<select id="filterPreset"></select></label>
+            <div class="kernel-title"><h3>Ядро 3 × 3</h3><span id="kernelSum">Сумма: 1</span></div>
+            <div class="kernel-grid" id="kernelGrid">
+              <input type="number" step="any" aria-label="Ядро 1 1" /><input type="number" step="any" aria-label="Ядро 1 2" /><input type="number" step="any" aria-label="Ядро 1 3" />
+              <input type="number" step="any" aria-label="Ядро 2 1" /><input type="number" step="any" aria-label="Ядро 2 2" /><input type="number" step="any" aria-label="Ядро 2 3" />
+              <input type="number" step="any" aria-label="Ядро 3 1" /><input type="number" step="any" aria-label="Ядро 3 2" /><input type="number" step="any" aria-label="Ядро 3 3" />
+            </div>
+            <p id="filterDescription">Пиксели остаются без изменений.</p>
+          </section>
+          <section class="filter-options">
+            <h3>Каналы</h3>
+            <label class="check-card"><input id="filterAll" type="checkbox" checked /> Все доступные</label>
+            <div id="filterChannels" class="filter-channels"></div>
+            <label>Края изображения<select id="edgeMode"><option value="extend">Копировать край</option><option value="black">Заполнять чёрным</option><option value="white">Заполнять белым</option></select></label>
+            <div class="filter-progress" id="filterProgress" hidden><progress id="filterProgressBar" max="100" value="0"></progress><span id="filterProgressText">0%</span></div>
+            <p class="form-error" id="filterError" hidden></p>
+          </section>
+        </div>
+        <footer>
+          <label class="switch-line"><input id="filterPreview" type="checkbox" checked /> Предпросмотр</label>
+          <div><button class="ui-button ui-button-light" id="filterReset" type="button">Сбросить</button><button class="ui-button ui-button-light" id="filterCancel" type="button">Отмена</button><button class="ui-button ui-button-purple" id="filterApply" type="submit">Применить</button></div>
+        </footer>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./js/app.bundle.js"></script>
+  </body>
+</html>
